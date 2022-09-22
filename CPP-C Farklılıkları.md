@@ -289,7 +289,7 @@ void func()
 }
 ```
 
-* Scope leakage'ın bir diğer dezavantajı ise örnepin string nesnesi memory'de tutuluyor. Gereksiz yere bu nesne yok olana kadar memory'de yer tutmaya devam ediyor. 
+* Scope leakage'ın bir diğer dezavantajı ise örneğin string nesnesi memory'de tutuluyor. Gereksiz yere bu nesne yok olana kadar memory'de yer tutmaya devam ediyor. 
 
 ```
 if (int x= foo()) 
@@ -301,3 +301,212 @@ if (int * x= foo())
 // x != nullptr kontrolü yapar.
 
 ```
+
+* Karakter Türünün Tipi
+	* 'A' C'de 4 byte int type
+	* 'A' C++'da ise 1 byte char type'dır.
+
+* String Literal Türünün Tipi
+    * C'de "akif"'in değeri char[5] (4 karakter + null termination "/0")
+    * C++'da "akif"'in değeri const char[5]'dir.
+    C++'da string literal'ini değiştirmek undefined behaviour'dur. Çünkü string literal'i kullanıldığında gelen yapı const char *'dır. Yani array decay sonucunda &array[0] gelir;
+    
+#### SizeOf Operandı
+* sizeof operand'ının tipi size_t'dir.
+* sizeof unevaluated context'dir.
+```
+Örnek;
+int x= 10;
+size_t y= sizeof(x++);
+printf("%zu %d/n", y, x); // Output: 4 - 10
+```
+
+#### Array Decay'in Uygulanmadığı Durumlar
+*
+  ```
+  int a[10] = {1, 5, 7};
+  printf("%zu/n", sizeof(a)); // Output: 40 (4 * 10)
+  ```
+  Çünkü a array'i sizeof'un içinde çağırıldığında Array Decay çalışmaz ve array'in tamamı gelir.
+
+* a -> &a[0] // a array'i Array Decay açılımı
+* &a -> int(*)[10] // Tüm array belirtmek için kullanılan tür. "&" operatörünü uygularsak array'e Array Decay çalışmaz ve array'in tamamı gelir.
+
+```
+//Array Decay çalışması:
+printf("%p %p \n", a, a+1); Output: a[0]'ın adres değeri
+                                    a[1]'in adres değeri
+```
+
+
+* C++'da String Literal Kullanımı
+  * char *p= "batuhan"; // Syntax Error. Çünkü "batuhan" string literal'inin array decay'i const char *'dır. const T * to T*'a implicit dönüşüm C++'da yapılamaz.
+  * char str[4]= "anıl"; // C'de bu ifade geçerlidir. Fakat array null termination karakterini içerecek kapasitede değil. Bu yüzden kullanımı tehlikelidir. C++'da ise kapasite yeterli olmadığı için bu bir Syntax Error'dur.
+ 
+#### Ek Bilgi: Expressions (C++)
+
+* 10u (unsigned int) 
+* 4.f(float)
+* 6llu (unsigned long long)
+* x+5
+* f(x)
+* x++
+* f(x)>g(x)
+* x*x + y*y
+* 10ul (unsigned long)
+
+
+* Her expression'nın bir data type'ı ve value category'si vardır.
+
+* short s1= 5, s2= 7;
+  s1 + s2 expression'nın data type'ı integer'dır. Int'ın alt type'ları ile işlem yapılırsa int'e promote olur. (Integral Promotion)
+
+*  char c= 'A'
+*  +c veya -c expression'larının data type'ı int olur. Çünkü '+' ve '-' operatörleri ile char to int promotion gerçekleşir.
+*  5 + 3.2 expression data type'ı double olur.
+*  int x= 10; 
+   x > 5 ? 3 : 4.7; // ifadesinin data type'ı double olur.
+   
+
+#### C Value Category
+* L value expression (Memory'de yer tutan ve bir nesneye karşılık gelen ifadeler)
+* R value expression 
+
+##### Value Category Saptama Testi
+* & operandını expression'nun önüne koyduğumuzda compiler syntax error vermezse bu ifade bir L value'dur. Hata verirse bir R value'dur.
+
+Örnek;
+```
+char c = 10; (c bir L value'dur.)
++c ifadesi ise integral promotion'a uğrar 
+ve tipi int'a dönüşür. 
+Value kategorisi ise R value'ya dönüşür. 
+```
+
+#### C++ Value Category
+* PR value
+* L value
+* x value
+
+* int x= 10; (x L valeu'dur. Her değişken ismi bir L value'dur.)
+
+* x++; PR value'dur.
+* ++x; Left value'dur.
+* 34; PR value
+* int foo(); foo() PR value'dur.
+* ```
+  int x=10;
+  int *p = &x; // *p L value'dur. 
+  ```
+* std::move(x); // X value'dur.
+* int & foo(); foo() L value'dur.
+
+#### Ek Bilgi:
+
+#include <cstring> //C'den gelen string header'ı
+#include <string> //C++ string header'ı
+#include <cstdio> //C++'da bu şekilde çağrılır.
+#include <stdio.h> //C'de bu şekilde çağrılır.
+
+---
+
+#### Initialization on C++
+
+* int x; // Default initialization. C++'da otomatik ömürlü değişken default initialize edilirse compiler "garbage value" verir. Buda undefined behaviour'dur.
+
+Static Ömürlü Değişkenler
+* Global scope'daki değişkenler
+* Static anahtar sözcüklü değişkenler
+* String literalleri sonucunda oluşan const char * değişkenleri
+
+Static ömürlü bir değişken tanımlandığında compiler Zero Initialization uygular.
+Zero initialization değerleri;
+
+  * Aritmetik değişkenler için 0
+  * Boolean değişkenler için false
+  * Pointer değişkenler için nullptr'dir.
+
+##### C++ Initialization Türleri
+* int x= 10; // Copy Initialization
+* int x(98); // Direct Initialization
+* int x{6}; //Uniform or Brace Initialization
+
+```
+Örnek;
+double dval= 5.6;
+int i= dval; // Legal narrowing conversion gerçekleşir. Loss of data oluşur.
+int i2(dval); // Legal narrowing conversion gerçekleşir. Loss of data oluşur.
+int i3{dval}; Illegal Syntax Error. Her zaman Uniform initialization tercih etmek daha güvenlidir. 
+```
+
+```
+Örnek;
+int x{}; // Value initialization  Value: 0.
+// Value initialization'da static scope değişkenlere uygulanan zero initialization uygulanır.
+
+int y; // Otomatik ömürlü değişken Garbage value olur ve bu C++'da bir undefined behaviour'dur.
+
+// "int x{}" ile "int x{0}" aynıdır.
+
+int a[4] = {};
+int a[4] {};
+int a[4] = {0};
+// a array'ini initialize eden bu kod satırlarının hepsi aynıdır. Hepside a int array'inin tüm elemanlarını 0 ile initialize eder.
+```
+
+Not: const nesneler default initialize edilemez. Syntax error'dur.
+Not: int &p referans değişkenler default initialize edilemezler. Syntax error'dur.
+
+
+#### Ek Bilgi
+#### Scoot Meyer - Most Vexing Parse
+
+* Öyle bildirimler bilgi var ki 
+  *  Nesne tanımlama (Object Instantiation)
+  *  Fonksiyon Bildirimi (Function Decleration)
+
+Bu bildirimlerde function decleration'nın önceliği vardır.
+
+```
+struct A {};
+struct B { B(A); };
+B bx(A()); // Most vexing parse çalışır ve compiler bunu bir fonksiyon bildirimi olarak algılar.
+B bx{A()}; // Most vexing parse çalışmaz. Böylece bu bir nesne tanımlama olarak compiler tarafından algılanır.
+```
+
+#### Type Deduction
+
+Compile Time ile ilgili şeyler static'dir.
+Run Time ile ilgili şeyler dynamic'dir.
+
+int * foo(const int *, size_t);
+
+auto fp = &foo; // Auto type deduction
+// Extraction of fp: int * (*fp) (const int *, size_t);
+
+##### AAA(Almost Always Auto)
+
+* Bu bir kod yazma stilidir. Açılımı neredeyse her zaman auto type deduction kullan.
+
+auto x= 10; // Compile Time'da compiler x'in tipini int olarak oluşturur.
+
+Not: auto değişkenin default initialization'ı olmaz.
+
+const auto x = 10; // auto = int Legal
+int ival{};
+auto * x= &ival; // auto = int
+
+Null Pointer Conversion
+int * ptr= 0;
+int * ptr= NULL; //NULL stdio.h'da #define edilmiş bir makrodur. Bu yüzden bu header dosyasını #include etmek zorunludur.
+
+C++11'den itibaren;
+int *p= nullptr; // Bu keyword 0 ve NULL macrosunun yerine geçmesi için gelmiştir. Keyword olduğu için include'a gerek yoktur. Türü nullptr_t'dir. Sadece pointer'ları assign ederken kullanılır. 
+
+
+Not:
+int *p{nullptr};
+
+p == nullptr ve !p aynı ifadelerdir. 
+
+nullptr PR value'dur.
