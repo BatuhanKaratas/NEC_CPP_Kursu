@@ -130,6 +130,7 @@ Her expression'ının **Data Type**'ı ve **Value Category**'si bulunur.
 | a, b        | R value | L value |
 | ? :         | R value | L value |
 | assignment  | R value | L value |
+
 `void func (int && r);`
 R parametresinin;
 **Data type**'ı: R value'dur.
@@ -181,6 +182,7 @@ int x: 5; // ':' sayesinde x değişkeni 5 bitlik alanda tutulur. Bu değer cons
 | &&        |                           |
 | +=        |                           |
 | ,         |                           |
+
 `int * p; // Bir declerator'dür. Operatör değildir. `
 
 ##### Short Circuit Behaviour
