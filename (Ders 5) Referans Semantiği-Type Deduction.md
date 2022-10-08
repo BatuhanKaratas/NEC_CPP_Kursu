@@ -212,3 +212,148 @@ int (&fp) (int)= foo; // Function reference
 * Elemanları referans tipinde olan dizi yoktur.
 * Null reference yoktur. Bunun yerine C++17 ile gelen optional kullanılabilir.
 * Referanslar başka bir nesneye refer edilemez. (Tek bind olur)
+
+Not: 
+
+|               | Call by left value | Call by right value |
+|---------------|--------------------|---------------------|
+| f1(T &)       | Valid              | Non valid           |
+| f2(T &&)      | Non valid          | Valid               |
+| f3(const T &) | Valid              |                     |
+# Type Deduction
+* Type deduction compile time'da yapılır.
+
+## Auto
+Type deduction auto key word'ü için yapılır.
+
+auto x= expression;
+
+* const auto * x= expression; // auto -> int'dir. 
+* auto x= 0u; // auto -> unsigned int
+* 
+```cpp
+char c = 'a';
+auto x= +c; // '+' operatöründen dolayı integral promotion oluşur. 
+// auto -> int
+```
+* 
+```cpp
+int ival = 0;
+auto x= ival * 1.2; // auto -> double 
+```
+* 
+```cpp
+const int cx= 6;
+auto y = cx; // Auto ile type deduction'da const ifadesi düşer.
+// auto -> int
+```
+* 
+```cpp
+int x= 10;
+int &r= x;
+auto y= r; // Bu dönüşümde sadece tür önemlidir. Dolayısıyla auto -> int
+```
+* 
+```cpp
+int x= 10;
+const int &r= x;
+auto y= r; // Bu dönüşümde sadece tür önemlidir. auto -> int
+++r; // Syntax error
+++x; // Legal;
+```
+
+* 
+```cpp
+int a[]= {1, 3, 6, 7};
+auto x= a; // Array decay gerçekleşir. auto -> int *
+```
+
+* 
+```cpp
+const int a[]= {1, 3, 6, 7};
+auto x= a; // Array decay gerçekleşir. auto -> const int *
+```
+
+* 
+```cpp
+const int x= 210;
+auto y= &x; // Reference semantiği kullanıldığı için const'luk korunur.
+// auto -> const int *
+```
+
+* 
+```cpp
+auto p= "murat"; // String literal const char [6] (Array decay)
+// Bundan dolayı auto -> const char *
+```
+
+* 
+```cpp
+int * const ptr{}; // const ptr to int
+auto p = ptr; // auto -> int *
+```
+* 
+```cpp
+const int * ptr{}; // ptr to const int
+auto p = ptr; // auto -> const int *
+```
+
+* 
+```cpp
+int foo(int);
+auto fp = foo; // Function decay,  auto -> int (fp*) (int)(function pointer)
+```
+ * 
+```cpp
+const int x= 10;
+auto &r= x; // Referans deklaratöründen dolayı const'luk korunur.
+// auto -> const int
+```
+ * 
+```cpp
+int a[3]= {1, 2, 3};
+auto &x= a; // Referans olunca array decay çalışmaz. A'nın kendisi gelir.
+auto -> int (&x) [3]
+```
+ * 
+```cpp
+int foo(int);
+auto &f3= foo; // auto -> int (&f3) (int) (Function reference)
+```
+
+* 
+```cpp
+auto &x= "deneme"; // Referans olunca array decay çalışmaz.
+// const char [7] auto -> const char (&x) [7]
+```
+* 
+```cpp
+int foo(int);
+auto p= foo; // int (*p) (int) (Function Pointer)
+auto x= &p; // int (**x) (int) (Pointer to Function Pointer)
+```
+* 
+```cpp
+int x;
+auto &&p= x; // X-> L value Universal reference (Forwarding reference)
+//auto -> int & &&. Bu durumda reference collapsing olur.
+
+auto &&p= 20; // R value Universal reference
+// auto -> int &&'dir.
+```
+##### Reference Collapsing 
+C++'da referansın referansı olamaz. 
+Collapsing durumlarında compiler aşağıdaki case'lere göre dönüşümleri yapıp uygun forma sokar.
+
+Not:
+T &: Left reference
+T&&: Right reference
+
+* T && + & = T &
+* T & + & = T &
+* T && + && = T&&
+
+Örnek;
+int & && p -> int & p
+
+
