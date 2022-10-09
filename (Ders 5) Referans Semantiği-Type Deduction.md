@@ -341,6 +341,7 @@ auto &&p= x; // X-> L value Universal reference (Forwarding reference)
 auto &&p= 20; // R value Universal reference
 // auto -> int &&'dir.
 ```
+
 ##### Reference Collapsing 
 C++'da referansın referansı olamaz. 
 Collapsing durumlarında compiler aşağıdaki case'lere göre dönüşümleri yapıp uygun forma sokar.
@@ -354,6 +355,115 @@ T&&: Right reference
 * T && + && = T&&
 
 Örnek;
+```cpp
 int & && p -> int & p
 
+using mytype = int &&;
+mytype && x = 10; // int && && -> int &&
+
+int y{10};
+mytype & x= y; // int && & -> int &
+```
+* 
+```cpp
+static auto x= 5; // auto -> int
+```
+* 
+```cpp
+auto x= {5}; auto -> std::initializer_list
+```
+* 
+```cpp
+int x= 10;
+auto p1= &x; // auto -> int *
+auto *p2= &x; // auto -> int // p1 ve p2'nin çıkarımlarıda aynı olur.
+```
+* 
+```cpp
+int x= 10;
+int * ptr= &x;
+auto p1= &ptr; // auto -> int **
+auto * p2= &ptr; // auto -> int *
+auto ** p3= &ptr; // auto -> int
+```
+ Not: Universal reference kısaca herşeye bağlanabilen generic bir yapıdır.
+ 
+ ```cpp
+auto && x= 10; // R value, universal reference, auto -> int(T)
+
+int a= 10;
+auto && y= a; // L value, universal reference, auto -> int(T &) olur.
+```
+
+## Decltype
+* Bir specifier'dır. Unevaluated'dır. İçerisinde ki ifadenin kalıcılığı yoktur. (sizeof operatörü gibi)
+* Identifier ve expression intputları için iki farklı rule set vardır.
+
+Identifier Rule Set
+* 
+```cpp
+int x= 1;
+decltype(x) y; //int
+
+const int x= 5;
+decltype(x) y{56}; // const int
+
+int x{};
+auto &r{x};// auto -> int
+declytype(r) r2{x}; // int &
+
+int x{};
+const auto &r1 = x; // int
+decltype(r1) r2= x; // const int &
+r2++; // Syntax error Non-mutable
+
+struct Nec {int a;};
+Nec myNec {};
+decltype(myNec.a) n; // int
+```
+Expression Rule Set
+Expression ifadesinin primary value category'sine bağlıdır.
+
+| Primary value category | Decltype Output |
+|------------------------|-----------------|
+| L value                | T &             |
+| PR value               | T               |
+| X value                |                 |
+```cpp
+decltype(10)// int (T)
+    
+int x= 10;
+int * ptr= &x;
+decltype(*ptr) // L value, int &
+```
+
+** Mülakat Sorusu: **
+```cpp
+int x= 5;
+decltype(x); // int (identifier)
+
+decltype((x)) // int & (L value expression)
+```
+
+```cpp
+int x= 5;
+decltype(x++); // R value expression int 
+decltype(++x); // L value expression int &
+```
+
+```cpp
+int a [5] {};
+decltype(a) b; // Identifier Array decay çalışmaz. int a[5]
+decltype(a[0]) c; // L value expression, int & 
+```
+
+```cpp
+int f1(); 
+int & f2();
+int && f3();
+
+declytype(f1()); // R value exp. int
+declytype(f2()); // L value exp. int &
+declytype(f3()); // x value exp. int &&           
+```
 
