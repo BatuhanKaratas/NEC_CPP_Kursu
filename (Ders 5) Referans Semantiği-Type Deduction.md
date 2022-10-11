@@ -395,6 +395,18 @@ int a= 10;
 auto && y= a; // L value, universal reference, auto -> int(T &) olur.
 ```
 
+Not:
+##### AAA (Almost Always Auto)
+Bu yaklaşım kodda mümkün olan her yerde auto kullanımı savunur.
+
+Auto Avantajları(+)
+* Kod verbosunu önler. Okunabilirliği arttırır.
+* Kod maintability'sini arttırır. Daha generic bir kod oluşmasını sağlar.
+* Auto ile değişken tanımlamalarında initialization zorunludur. Bu yüzden garbage value undefined behaviour'u elemine etmiş oluruz.
+
+Auto Eksileri(-)
+* Farkındalık azalır. Bazı durumlarda (implicit conversion) yanlış dönüşümler oluşur ve farkedilmeye bilir.
+
 ## Decltype
 * Bir specifier'dır. Unevaluated'dır. İçerisinde ki ifadenin kalıcılığı yoktur. (sizeof operatörü gibi)
 * Identifier ve expression intputları için iki farklı rule set vardır.
@@ -466,4 +478,3 @@ declytype(f1()); // R value exp. int
 declytype(f2()); // L value exp. int &
 declytype(f3()); // x value exp. int &&           
 ```
-
