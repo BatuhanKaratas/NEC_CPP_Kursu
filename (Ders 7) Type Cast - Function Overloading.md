@@ -355,6 +355,123 @@ int x=5;
 func(x); // İkiside exact match olmasına rağmen. 1 nolu func seçilir.
 ```
 
+```cpp
+* 
+void func(int x, int y=0);
+void func(int x); 
 
+func(12); // Overload var. Fakat ambiguity var. Syntax error.
+
+* 
+1 void func(int & x);
+2 void func(int x);
+
+int y{};
+func(y); // Overload var. Fakat ambiguity var. Syntax error.
+
+func(10); // Ambiguity yok. 2 seçilir. Çünkü x reference sadece L value alabilir.
+
+* 
+void func(const int & x);
+void func(int x); 
+
+func(10); // Ambiguity var. Syntax error. Çünkü PR value her iki fonksiyon içinde viable.
+
+* 
+1 void func(double *);
+2 void func(int);
+
+func(0); // Legal. Ambiguity yok. 2 ile exact match olur.
+func(nullptr); // Legal. Ambiguity yok. 1 ile exact match olur.
+* 
+void func(double *);
+void func(double);
+
+func(0); // Overload var. 0 double *'a nullptr olarak dönüşebilir. Ayrıca double'da dönüşebilir. Her ikisi de viable standart conversion yapılır. Fakat ambiguity vardır. Syntax error.
+
+*
+(Istisna)
+1. void func(bool);
+2. void func(void *);
+
+int x{};
+func(&x); // int to bool dönüşümü vardır. 
+// Zero : false, Others: true. Bu yüzden 1 viable'dır.
+// int * to void *(Generic pointer type) dönüşümü legal'dir. 2'de viavle'dır. Fakat bu özel kural gereği 2 seçilir.
+
+* 
+(Istisna)
+1 void func(const int &);
+2 void func(int &&);
+3 void func(int &);
+
+func(10); // Arguman value category PR. 1 ve 2 viable'dır. Fakat özel kural gereği 2 seçilir.
+
+int x= 10İ
+func(x); // Arguman value category L. 1 ve 3 viable'dır. Fakat özel kural gereği 3 seçilir.
+
+const int cx{45};
+func(cx); // Arguman value category L. Sadece 1 viable'dır. 1 ile exact match olur.
+
+*
+(Mülakat sorusu)
+void bar (int &)
+{
+    cout << 0;
+}
+void bar (int && x)
+{
+    cout << 1;
+}
+void foo (int && x)
+{
+    cout <<2;
+    bar(x); // Name'ler daima L valuedur. 
+}
+void foo (int & x)
+{
+    cout <<4;
+    bar(x);
+}
+
+main()
+{
+    foo(10); // Argümanın value category'si PR value. Output: 20    
+}    
+```
+
+Hatırlatma;
+
+|              | Decleration Type | Value Category |
+|--------------|------------------|----------------|
+| int && x     | int &&           | L value        |
+| int & x      | int &            | L value        |
+| int * x      | int *            | L value        |
+| &x (int * x) | int *            |                |
+```cpp
+int x{};
+int * && r = &x; // PR value olduğu için R value reference'a assign edebiliriz.
+const int * & r= &x; // PR value fakat bu durumda const, "int *"'ı tanımlar. Reference'ın const olması lazımdır. Bu ifadenin doğru çalışabilmesi için. Syntax error
+
+int * const & r= &x; // Legal. Reference const tanımlanmış oldu.
+```
+
+```cpp
+using iptr= int *;
+int x= 10;
+const iptr p= &x; // Legal. Dilin bir özelliği olarak eğer using, "pointer type" içeriyorsa ifadede yer alan const her zaman const ptr to int olur.
+
+const iptr &r= &x; // Const ptr to int olur. Böylece reference const'lanmış olur.  
+```
+
+```cpp
+1 void f(int, double, long);
+2 void f(char, int, double);
+3 void f(long, unsigned int, float);
+
+f(12, 2L, 1); // Legal 1 seçilir. 1. parametre ile exact match olan 1 üstülüğü kurdu. Ayrıca diğer viable'lar için diğer parametrelerinin overload resolution'da üstünlük kurmaması lazım. Yoksa ambiguity oluşur.
+
+f(2.3, true, 12); // Legal 2 seçilir. 2. parametre ile integral promotion olur ve diğerlerine 2 üstünlük kurar. Diğer parametreler içim üstünlük başkasına geçmez ve ambiguity oluşmaz.
+```
 
 
