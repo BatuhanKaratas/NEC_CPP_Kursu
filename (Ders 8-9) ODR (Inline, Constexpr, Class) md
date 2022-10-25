@@ -196,4 +196,204 @@ Nec * p= foo(); //OK
 sizeof(Nec) // Illegal    
 ```
 
+### ODR'ı Bozmayan Yapılar
+
+#### Classes
+Class iki farklı şekilde ifade edilir.
+* Forwad Decleration
+* Class Definition (ODR'ye göre bir bileşenin sadece 1 definition'ı olabilir.)
+
+```cpp
+class Nec {
+    // data members; static or non-static data members
+    // member functions; static or non-static members functions
+    // nested types
+
+    int a; // a variable'ı class scope'tadır.        
+};
+```
+
+Not: 
+```cpp
+class Myclass {
+    int a,b;
+    double m1, m2;
+}
+// Bu class definition'ı gören compiler, member'lar için memory'de bir yer ayırmaz. Bu sadece bir tanımlamadır.
+// Diğer source code'larda bu class'ı kullanmak isterse class definition header'da yapılır ve #include edildikçe bu header class olduğu için ODR ihlal edilmez. #include aslında header dosyası bileşenlerinin include edildiği source code'a yapıştırılmasıdır. 
+```
+* ODR ihal edilirse code ill formed olur. ODR'nin class'larda çalışması için class definition'ının isminin token by token("birebir")  aynı olması gerekir.
+```cpp
+"header1.h"
+class Myclass {
+    int a,b;
+}    
+```
+
+```cpp
+"header2.h"
+class Myclass {
+    int a;
+}    
+```
+
+İki class definition birebir aynı değildir. Ill formed bir code vardır. ODR ihlal edilmiştir.
+
+##### Access Control (Public - Private - Protected)
+C++'da compiler öncelikle gördüğü isme name lookup yapar. Bu ismin hangi data structure'a ait olduğunu belirlerse access control'e bakıyor.  Access control'den de geçerse erişim hata vermeden devam ediyor.
+
+ 1. Name lookup
+ 2. Context Control
+ 3. Access Control
+
+public: Sınıfı kullanacak client'lara erişim açık.
+private: Client'lara tamamen kapalı. Sadece sınıf için. (Internal)
+protected: Sadece bu sınıftan türeyenlerin ve sınıfın kendisinin internal kullanımına izin var. Client'lara kapalı.
+
+Not:
+```cpp
+class Myclass
+{
+    int x; // Default olarak private
+}
+
+class Myclass
+{
+    int x; // Default olarak public
+}
+```
+
+##### Non-Static Data Members
+
+```cpp
+class Myclass{
+    int x; // Non-static olduğu için her myclass objesinin ayrı bir x'i vardır. 
+}
+
+sizeof(Myclass) -> 4;
+```
+
+##### Class Scope
+* Compiler'ın name lookup'ta ilk olarak class scope'da bakacağı notasyonlar;
+```cpp
+class Myclass{
+    int x;  
+}
+
+Myclass a;
+Myclass b= &a;
+a.x; //Dot operator
+b->x //Arrow operator
+Myclass:: //Scope resolution operator    
+```
+Not: 
+```cpp
+class Myclass {
+    private:
+    void f(double);
+    public:
+    void f(int);
+}
+// Burada function overloading vardır.Çünkü private ve public ayrı bir scope oluşturmaz. Tek scope Myclass'dır.
+
+Myclass m;
+m.f(1.2); // Syntax error. 3'ten dolayı elendi.
+// Namelookup süreçleri;
+// 1- Name lookup (Myclass scope'u içinde ara)
+// 2- Context Control (Overload var. Function resolution: Exact Match)
+// 3- Access Control X (Private func)
+
+class Myclass {
+    public:
+    void foo(); // Non static member function (Class scope)
+    // İlk parametre non static member func olduğu için Myclass *'dır.
+    private:
+    int mx,my;
+};
+
+int foo(int); // Global function, Global namespace scope
+
+Myclass myclass;
+myclass.foo(); // Sadece class scope'da aranacak.
+```
+
+1. Class Definitions
+
+"ahmet.h"
+
+```cpp
+class Myclass {
+    void func() // Implicitly inline functions
+    {
+        // code
+    }        
+}
+```
+Not: Bir header'da class definition'ı içerisinde func definition yapılırsa bu func için inline expansion uygulanabilir olur.
+
+* Inline Variables (C++17 ile geldi)
+
+```cpp
+inline int a = 10;
+```
+Header dosyasında global scope'ta böyle bir tanımlama yaparsak ODR bozulmaz. Bu header'ı inlclude eden Source'lar için tek bir "a" değişkeni oluşturur.
+
+#### Constexpr
+
+```cpp
+int foo();
+int main()
+{
+    const int x= 10; // Sağ tarafın compiler tarafından constant olduğu açıkca görülmekte bu yüzden x constant expression'dır.
+    int a[x]{}; //Legal, Diziler boyut olarak sadece constant expression alabilir.
+    const int y= foo(); // foo()'nun return değerinin constant olduğu derleme aşamasında belli olmaz.
+    
+    int b[y]{}; // Syntax error. Çünkü y constant expression değildir.
+}    
+```
+
+Bu ihtiyaçdan dolayı constexpr ortaya çıkmıştır. constexpr ile tanımlanan değişkenlere ilk verilen değerin sabit olması zorunludur. Uyulmazsa initialization'da compiler hata verir.
+
+```cpp
+constexpr int x= 20;
+decltype(x) -> "const int"
+    
+int g{};
+constexpr int *p= &g;
+decltype(p) -> "int * const"
+// Çünkü constexpr değişkenlerin kendisinin const'lığını belirtir. Burada da bu pointer'dır. Yani; const ptr to int
+constexpr const int * p= &g;
+// const ptr to const int    
+```
+
+Not: Compiler constexpr veya const variable'lar için memory'de bir yer oluşturmuyor. Taki memory adresiyle ilgili bir işlem yapana kadar. (& operatörü ile erişim gibi)
+
+
+2. constexpr Functions
+
+Return value'su compile time'da belli olan fonksiyolardır.
+Yani, constexpr ile compiler'a bu fonksiyonun değerini compile time'da hesapla run time'a bırakma diyoruz.
+
+```cpp
+constexpr int sumSquare(int a, int b)
+{
+    return a*a + b*b;
+}    
+```
+
+Constexpr Function Limitation;
+* İçerisinde static local değişken tanımlanamaz.
+* Virtual olamaz.
+* Return type'ı literal type olmalıdır. (tam sayılar ve reel sayılar uygun, fakat custom class'lar olmaz.)
+* constexpr eğer tüm parametrelere const expressionlar gönderilirse çalışır. (compile time'da değerleri belli olan argumanlar). Yoksa runtime'da çalışır ve hata vermez.
+
+```cpp
+constexpr auto val= sumSquare(10, 20);
+// Return değerinin constant olması garanti altında. Çünkü return value'su constexptr variable'a atanmış. Eğer constexpr bir return üretmezse hata verir.
+
+constexpr int primes []= {2, 3, 5, 7, 11, 19}
+constexpr auto val = primes[4]; // 4. index'deki prime sayının const olduğu garanti altında.
+```
+
+Not: constexpr fonksiyonların header'da inline func gibi tanımlanması lazım. Çünkü compiler'ın compiler time'da fonksiyon kodunu görmesi lazım.
 
