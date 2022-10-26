@@ -272,51 +272,6 @@ class Myclass{
 
 sizeof(Myclass) -> 4;
 ```
-
-##### Class Scope
-* Compiler'ın name lookup'ta ilk olarak class scope'da bakacağı notasyonlar;
-```cpp
-class Myclass{
-    int x;  
-}
-
-Myclass a;
-Myclass b= &a;
-a.x; //Dot operator
-b->x //Arrow operator
-Myclass:: //Scope resolution operator    
-```
-Not: 
-```cpp
-class Myclass {
-    private:
-    void f(double);
-    public:
-    void f(int);
-}
-// Burada function overloading vardır.Çünkü private ve public ayrı bir scope oluşturmaz. Tek scope Myclass'dır.
-
-Myclass m;
-m.f(1.2); // Syntax error. 3'ten dolayı elendi.
-// Namelookup süreçleri;
-// 1- Name lookup (Myclass scope'u içinde ara)
-// 2- Context Control (Overload var. Function resolution: Exact Match)
-// 3- Access Control X (Private func)
-
-class Myclass {
-    public:
-    void foo(); // Non static member function (Class scope)
-    // İlk parametre non static member func olduğu için Myclass *'dır.
-    private:
-    int mx,my;
-};
-
-int foo(int); // Global function, Global namespace scope
-
-Myclass myclass;
-myclass.foo(); // Sadece class scope'da aranacak.
-```
-
 1. Class Definitions
 
 "ahmet.h"
