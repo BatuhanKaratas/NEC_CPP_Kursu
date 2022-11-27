@@ -37,7 +37,7 @@ namespace project {
         [[nodiscard]] int get_month()const; //10
         [[nodiscard]] int get_year()const; //11
         [[nodiscard]] int get_year_day()const; //12
-        [[nodiscard]] Weekday get_week_day()const; //13
+        [[nodiscard]] int get_week_day()const; //13
 
         Date& set_month_day(int day); //14
         Date& set_month(int month); //15
@@ -62,12 +62,17 @@ namespace project {
         friend std::istream& operator>>(std::istream&, Date& date); //32
 
     private:
+        void setWDayAndYearDay();
+        void checkDateComponentsValueRange(const int & mday, const int & month, const int & year) const;
+
         int m_mon{};
+        int m_mon_day{};
         int m_year{};
 
-        int m_mon_day{};
         int m_year_day{};
-        Weekday m_week_day{Weekday::Sunday};
+        int m_week_day{};
+
+        static constexpr uint8_t size_of_date_array{3};
     };
 
     bool operator<(const Date&, const Date&); //27
