@@ -68,7 +68,6 @@ project::Date::Date(const char *p)
 
 project::Date::Date(std::time_t timer)
 {
-    tm utc_tm = *gmtime(&timer);
     tm local_tm = *localtime(&timer);
 
     checkDateComponentsValueRange(local_tm.tm_mday,
@@ -152,6 +151,127 @@ void project::Date::checkDateComponentsValueRange(const int & mday, const int & 
     {
         throw DateExcept{"ctor argument(s) value is out of range."};
     }
+}
+
+project::Date project::Date::operator-(int day) const
+{
+    std::tm tmDateIn = { 0, 0, 0,
+                        m_mon_day, m_mon - 1,
+                        m_year - 1900 };
+
+    std::time_t timetDateIn= std::mktime(&tmDateIn);
+    std::chrono::time_point tpDate= std::chrono::system_clock::from_time_t(timetDateIn);
+    std::chrono::time_point newtpDate= tpDate - std::chrono::hours (day * 24);
+
+    std::time_t timeDateOut= std::chrono::system_clock::to_time_t(newtpDate);
+
+    return Date(timeDateOut);
+}
+
+project::Date& project::Date::operator+=(int day)
+{
+    std::tm tmDateIn = { 0, 0, 0,
+                         m_mon_day, m_mon - 1,
+                         m_year - 1900 };
+
+    std::time_t timetDateIn= std::mktime(&tmDateIn);
+    std::chrono::time_point tpDate= std::chrono::system_clock::from_time_t(timetDateIn);
+
+    std::chrono::time_point newtpDate= tpDate + std::chrono::hours (day * 24);
+    std::time_t timeDateOut= std::chrono::system_clock::to_time_t(newtpDate);
+
+    tm localTm = *localtime(&timeDateOut);
+
+    checkDateComponentsValueRange(localTm.tm_mday,
+                                  localTm.tm_mon + 1,
+                                  localTm.tm_year + 1900);
+
+    m_mon_day= localTm.tm_mday;
+    m_mon= localTm.tm_mon + 1;
+    m_year= localTm.tm_year + 1900;
+    m_week_day = localTm.tm_wday;
+    m_year_day= localTm.tm_yday;
+
+    return *this;
+}
+
+project::Date& project::Date::operator-=(int day)
+{
+    std::tm tmDateIn = { 0, 0, 0,
+                         m_mon_day, m_mon - 1,
+                         m_year - 1900 };
+
+    std::time_t timetDateIn= std::mktime(&tmDateIn);
+    std::chrono::time_point tpDate= std::chrono::system_clock::from_time_t(timetDateIn);
+
+    std::chrono::time_point newtpDate= tpDate - std::chrono::hours (day * 24);
+    std::time_t timeDateOut= std::chrono::system_clock::to_time_t(newtpDate);
+
+    tm localTm = *localtime(&timeDateOut);
+
+    checkDateComponentsValueRange(localTm.tm_mday,
+                                  localTm.tm_mon + 1,
+                                  localTm.tm_year + 1900);
+
+    m_mon_day= localTm.tm_mday;
+    m_mon= localTm.tm_mon + 1;
+    m_year= localTm.tm_year + 1900;
+    m_week_day = localTm.tm_wday;
+    m_year_day= localTm.tm_yday;
+
+    return *this;
+}
+
+project::Date& project::Date::operator++()
+{
+    return (*this += 1);
+}
+
+project::Date project::Date::operator++(int)
+{
+    Date unchangedDate = *this;
+
+    (*this) += 1;
+
+    return unchangedDate;
+}
+
+project::Date& project::Date::operator--()
+{
+    return (*this -= 1);
+}
+
+project::Date project::Date::operator--(int)
+{
+    Date unchangedDate = *this;
+
+    (*this) -= 1;
+
+    return unchangedDate;
+}
+
+project::Date project::Date::random_date()
+{
+    using namespace std::chrono;
+    auto lowerBoundDate = year{random_min_year}/1/1;
+    auto upperBoundDate = year{random_max_year}/12/31;
+    int maxDayNumber= (sys_days{upperBoundDate} - sys_days{lowerBoundDate}).count();
+    auto randomDayNumber= rand() % (maxDayNumber + 1 - 0) + 0;
+
+    Date random{1, 1, 1940};
+    return random += randomDayNumber;
+}
+
+constexpr bool project::Date::isleap(int y)
+{
+    std::chrono::year chronoYear{y};
+
+    if(chronoYear.ok() && chronoYear.is_leap())
+    {
+        return true;
+    }
+
+    return false;
 }
 
 
