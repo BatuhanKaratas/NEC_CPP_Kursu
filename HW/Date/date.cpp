@@ -19,7 +19,7 @@ const char * project::DateExcept::what() const noexcept
 
 project::Date::Date() : m_mon_day{1}, m_mon{1}, m_year{1990}
 {
-
+    setWDayAndYearDay();
 }
 
 project::Date::Date(int d, int m, int y)
@@ -29,6 +29,8 @@ project::Date::Date(int d, int m, int y)
     m_mon_day= d;
     m_mon= m;
     m_year= y;
+
+    setWDayAndYearDay();
 }
 
 project::Date::Date(const char *p)
@@ -62,6 +64,8 @@ project::Date::Date(const char *p)
     m_mon_day= dateComponent[0];
     m_mon= dateComponent[1];
     m_year= dateComponent[2];
+
+    setWDayAndYearDay();
 }
 
 project::Date::Date(std::time_t timer)
@@ -136,7 +140,7 @@ void project::Date::setWDayAndYearDay()
 
     std::time_t time_temp = std::mktime(&time_in);
 
-    const std::tm * time_out = std::localtime(&time_temp);
+    const std::tm * time_out = std::gmtime(&time_temp);
 
     m_year_day= time_out->tm_yday;
     m_week_day= time_out->tm_wday;
