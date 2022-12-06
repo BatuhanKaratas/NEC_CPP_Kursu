@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <chrono>
 #include "date.h"
+#include "iostream"
 
 project::DateExcept::DateExcept(const std::string & errMsg) : m_error_message{errMsg}
 {
@@ -18,7 +19,7 @@ const char * project::DateExcept::what() const noexcept
 
 project::Date::Date() : m_mon_day{1}, m_mon{1}, m_year{1990}
 {
-    setWDayAndYearDay();
+
 }
 
 project::Date::Date(int d, int m, int y)
@@ -28,7 +29,6 @@ project::Date::Date(int d, int m, int y)
     m_mon_day= d;
     m_mon= m;
     m_year= y;
-    setWDayAndYearDay();
 }
 
 project::Date::Date(const char *p)
@@ -62,8 +62,6 @@ project::Date::Date(const char *p)
     m_mon_day= dateComponent[0];
     m_mon= dateComponent[1];
     m_year= dateComponent[2];
-
-    setWDayAndYearDay();
 }
 
 project::Date::Date(std::time_t timer)
@@ -137,17 +135,18 @@ void project::Date::setWDayAndYearDay()
                         m_mon_day, m_mon - 1, m_year - 1900 };
 
     std::time_t time_temp = std::mktime(&time_in);
+
     const std::tm * time_out = std::localtime(&time_temp);
 
-    m_week_day= time_out->tm_wday;
     m_year_day= time_out->tm_yday;
+    m_week_day= time_out->tm_wday;
 }
 
 void project::Date::checkDateComponentsValueRange(const int & mday, const int & month, const int & year) const
 {
-    if((mday >= 1 && mday <= 31) ||
-       (month >= 1 && month <= 12) ||
-       (year < year_base))
+    if(!(mday >= 1 && mday <= 31) ||
+       !(month >= 1 && month <= 12) ||
+       !(year_base <= year) )
     {
         throw DateExcept{"ctor argument(s) value is out of range."};
     }
@@ -274,4 +273,120 @@ constexpr bool project::Date::isleap(int y)
     return false;
 }
 
+auto project::Date::convertToDayNumber() const -> int
+{
+    std::tm tmDateIn = { 0, 0, 0,
+                           m_mon_day, m_mon - 1,
+                           m_year - 1900 };
 
+    std::time_t timetDateIn= std::mktime(&tmDateIn);
+    std::chrono::time_point tpDate= std::chrono::system_clock::from_time_t(timetDateIn);
+    return std::chrono::duration_cast<std::chrono::days>
+            (tpDate.time_since_epoch()).count();
+}
+
+bool project::operator<(const Date& d1, const Date& d2)
+{
+    return d1.convertToDayNumber() < d2.convertToDayNumber();
+}
+
+bool project::operator==(const Date& d1, const Date& d2)
+{
+    return d1.convertToDayNumber() == d2.convertToDayNumber();
+}
+
+std::ostream& project::operator<<(std::ostream& os, const Date& date)
+{
+    return os << std::to_string(date.m_mon_day) << ' ' <<
+                 Date::MonthStr[date.m_mon] << ' ' << std::to_string(date.m_year) << ' '
+                 << Date::WeekdayStr[date.m_week_day] << '\n';
+}
+
+std::istream& project::operator>>(std::istream& is, Date& date)
+{
+    is >> date.m_mon_day;
+    char dash;
+    is >> dash;
+    if(dash != '/')
+        is.setstate(std::ios::failbit);
+    is >> date.m_mon;
+    is >> dash;
+    if(dash != '/')
+        is.setstate(std::ios::failbit);
+    is >> date.m_year;
+    return is;
+}
+
+bool project::operator>(const Date& d1, const Date& d2)
+{
+    return d2 < d1;
+}
+
+bool project::operator<=(const Date& d1, const Date& d2)
+{
+    return !(d1 > d2);
+}
+
+bool project::operator>=(const Date& d1, const Date& d2)
+{
+    return !(d1 < d2);
+}
+
+bool project::operator!=(const Date& d1, const Date& d2)
+{
+    return !(d1 == d2);
+}
+
+int project::operator-(const Date& d1, const Date& d2)
+{
+    return std::abs(d1.convertToDayNumber() - d2.convertToDayNumber());
+}
+
+project::Date project::operator+(const Date& date, int n)
+{
+    return Date{date} + n;
+
+}
+
+project::Date project::operator+(int n, const Date& date)
+{
+    return date + n;
+}
+
+project::Date::Weekday& project::operator++(Date::Weekday& wd)
+{
+    auto weekDayNum= static_cast<unsigned int>(wd);
+    weekDayNum = (weekDayNum == 6) ? 0 : weekDayNum++;
+
+    wd= static_cast<Date::Weekday>(weekDayNum);
+    return wd;
+}
+
+project::Date::Weekday project::operator++(project::Date::Weekday& wd, int dayNum)
+{
+    for (auto count{0}; count < dayNum; count++)
+    {
+        operator++(wd);
+    }
+
+    return Date::Weekday{wd};
+}
+
+project::Date::Weekday& project::operator--(Date::Weekday& wd)
+{
+    auto weekDayNum= static_cast<unsigned int>(wd);
+    weekDayNum = (weekDayNum == 0) ? 6 : weekDayNum--;
+
+    wd= static_cast<Date::Weekday>(weekDayNum);
+    return wd;
+}
+
+project::Date::Weekday project::operator--(Date::Weekday& wd, int dayNum)
+{
+    for (auto count{0}; count < dayNum; count++)
+    {
+        operator--(wd);
+    }
+
+    return Date::Weekday{wd};
+}
