@@ -78,7 +78,7 @@ namespace project {
                                                       "Cumartesi"};
 
         static const inline std::string MonthStr[12]{"Ocak", "Subat", "Mart",
-                                                     "Nisan", "Mayıs","Haziran",
+                                                     "Nisan", "Mayis","Haziran",
                                                      "Temmuz", "Agustos", "Eylul",
                                                      "Ekim", "Kasim", "Aralik"};
 
