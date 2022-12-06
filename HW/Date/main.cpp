@@ -5,7 +5,10 @@ int main() {
     try
     {
         srand(time(nullptr));
-        project::Date a{1, 1, 1899};
+
+        for (int i = 0; i < 5; ++i) {
+            std::cout << project::Date::random_date();
+        }
     }
     catch (const std::exception & ex)
     {
