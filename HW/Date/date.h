@@ -9,13 +9,14 @@
 #include <ctime>
 #include <stdexcept>
 #include <string>
+#include <array>
 
 namespace project {
     class DateExcept : public std::exception
     {
     public:
-        explicit DateExcept(const std::string &);
-        const char * what() const noexcept override;
+        explicit DateExcept(std::string );
+        [[nodiscard]] const char * what() const noexcept override;
 
     private:
         std::string m_error_message{};
@@ -23,9 +24,9 @@ namespace project {
 
     class Date {
     public:
-        static constexpr int year_base = 1900;  //1
-        static constexpr int random_min_year = 1940;  //2
-        static constexpr int random_max_year = 2020;  //3
+        static constexpr int YEAR_BASE = 1900;  //1
+        static constexpr int RANDOM_MIN_YEAR = 1940;  //2
+        static constexpr int RANDOM_MAX_YEAR = 2020;  //3
         enum class Weekday : unsigned int { Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday }; //4
 
         Date();
@@ -54,7 +55,9 @@ namespace project {
 
         static Date random_date(); //25
         static constexpr bool isleap(int y); //26
-        [[nodiscard]]auto convertToDayNumber() const -> int;
+        [[nodiscard]]auto convertToDayNumber() const;
+        [[nodiscard]]auto convertTmToTp() const ->std::chrono::time_point<std::chrono::system_clock>;
+
 
         friend bool operator<(const Date&, const Date&); //27
         friend bool operator==(const Date&, const Date&); //27
@@ -62,7 +65,7 @@ namespace project {
         friend std::istream& operator>>(std::istream&, Date& date); //32
 
     private:
-        void checkDateComponentsValueRange(const int & mday, const int & month, const int & year) const;
+        static void checkDateComponentsValueRange(const int & mday, const int & month, const int & year);
         void setWDayAndYearDay();
 
         int m_mon_day{};
@@ -72,15 +75,17 @@ namespace project {
         int m_year_day{};
         int m_week_day{};
 
-        static constexpr uint8_t size_of_date_array{3};
-        static const inline std::string WeekdayStr[7]{"Pazar", "Pazartesi", "Sali",
-                                                      "Carsamba", "Persembe", "Cuma",
-                                                      "Cumartesi"};
+        static constexpr uint8_t SIZE_OF_DATE_ARRAY{3};
+        static constexpr uint8_t MAX_NUMBER_OF_CHAR_IN_DATE{10};
 
-        static const inline std::string MonthStr[12]{"Ocak", "Subat", "Mart",
-                                                     "Nisan", "Mayis","Haziran",
-                                                     "Temmuz", "Agustos", "Eylul",
-                                                     "Ekim", "Kasim", "Aralik"};
+        static const inline std::array<std::string, 7> WeekdayStr{"Pazar", "Pazartesi", "Sali",
+                                                                  "Carsamba", "Persembe", "Cuma",
+                                                                  "Cumartesi"};
+
+        static const inline std::array<std::string, 12> MonthStr{"Ocak", "Subat", "Mart",
+                                                                 "Nisan", "Mayis","Haziran",
+                                                                 "Temmuz", "Agustos", "Eylul",
+                                                                 "Ekim", "Kasim", "Aralik"};
 
     };
 
